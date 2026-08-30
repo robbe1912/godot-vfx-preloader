@@ -22,7 +22,7 @@ jobs:
       - name: Import project
         run: godot --headless --import
 
-      - name: Smoke test (preloaded A/B run)
+      - name: Smoke run (headless, logic only — NOT a benchmark)
         run: |
           godot --headless --path . --script res://tests/run_ab_test.gd -- --mode=preload | tee ab.log
           grep -q "HITCHTEST RESULT" ab.log

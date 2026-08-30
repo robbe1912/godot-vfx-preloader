@@ -60,7 +60,12 @@ GPU upload + shader pipeline compilation — guaranteed hitch if not preloaded.
 
 `tests/run_ab_test.gd` runs the demo twice automatically. **It deletes Godot's on-disk
 shader pipeline cache (`user://shader_cache`) before every run**, so each run starts
-from cold and the test is repeatable:
+from cold and the test is repeatable.
+
+> **This test measures real GPU pipeline compilation — run it windowed on real
+> hardware.** The CI workflow runs the same script headless purely as a logic
+> smoke test (dummy renderer, no GPU): a green CI check verifies the code paths
+> work, not the hitch numbers.
 
 ```bash
 godot --headless --path . --script res://tests/run_ab_test.gd -- --mode=both
