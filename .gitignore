@@ -1,0 +1,6 @@
+# Godot
+.godot/
+
+# A/B test artifacts
+.hitchtest_result.txt
+.abtest_log.txt

@@ -1,0 +1,32 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://demo/vfx/one_shot_vfx.gd" id="1_script"]
+
+[sub_resource type="ParticleProcessMaterial" id="ppm"]
+emission_shape = 1
+emission_sphere_radius = 0.5
+spread = 90.0
+initial_velocity_min = 2.0
+initial_velocity_max = 5.0
+gravity = Vector3(0, -12.0, 0)
+scale_min = 0.6
+scale_max = 1.8
+
+[sub_resource type="StandardMaterial3D" id="mat"]
+albedo_color = Color(0.3, 1, 0.4, 1)
+emission_enabled = true
+emission = Color(0.3, 1, 0.4, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="BoxMesh" id="mesh"]
+material = SubResource("mat")
+size = Vector3(0.18, 0.18, 0.18)
+
+[node name="BurstGreen" type="GPUParticles3D"]
+script = ExtResource("1_script")
+one_shot = true
+explosiveness = 1.0
+amount = 32
+lifetime = 1.0
+process_material = SubResource("ppm")
+draw_pass_1 = SubResource("mesh")
