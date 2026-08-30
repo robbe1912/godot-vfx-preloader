@@ -129,7 +129,22 @@ The Godot docs page this technique is based on describes three mechanisms that a
 | **Ubershaders + automatic precompilation** (4.4+, Forward+/Mobile) | Pipelines for meshes/nodes present at load time; specialized variants compile in background | Scenes spawned **dynamically during gameplay** (spell impacts, hit effects) are invisible until first cast. No 2D/Canvas coverage. No API to gate gameplay on "pipelines ready". Node-level material overrides and late-enabled features (MSAA level, GI, ...) can slip through |
 | **SubViewport warmup** (the docs' own workaround for dynamic effects) | What this preloader implements | — |
 
-In other words: the baker ≈ this preloader's Phase 1 (done at export, shader step only). Phase 2 — the actual GPU pipeline build — is the step no export-time tool can do, and the docs' prescribed fix for dynamically spawned effects is exactly *"instantiate the scene at least once, even off-screen... e.g. using a SubViewport"*.
+In other words: the baker runs on **your** dev machine; the expensive step happens on
+the **player's** machine, at first draw. The baker ≈ this preloader's Phase 1 (done at
+export, shader step only). Phase 2 — the actual GPU pipeline build — is the step no
+export-time tool can do, and the docs' prescribed fix for dynamically spawned effects
+is exactly *"instantiate the scene at least once, even off-screen... e.g. using a
+SubViewport"*.
+
+Where each stage lands:
+
+| Stage | Naive | 4.4+ auto-precompile | Shader baker (4.5+) | **This preloader** |
+|---|---|---|---|---|
+| Resource cache (CPU) | first load | load time | load time | loading screen (threaded) |
+| Pipeline compilation (the hitch) | first draw | background, load-time scenes only | **never** (skips SPIR-V step only) | **loading screen** |
+| VRAM upload | first draw | first draw | first draw | **loading screen** |
+| Effect `_ready()` / CPU setup | first draw | first draw | first draw | **loading screen** |
+| Gated deterministically | — | no API | — | signal + progress |
 
 What this preloader adds over using built-ins alone:
 
@@ -153,6 +168,14 @@ What this preloader adds over using built-ins alone:
 
 ## Known limitations
 
+- **The cost lands on the player's machine, in your loading screen, by design.**
+  Godot's 4.4+ background precompilation spreads the same work over gameplay using
+  ubershaders. If your effects are all visible at load time and rare small stutters
+  are acceptable, the native path avoids the loading-time trade entirely.
+- Warmed resources stay in memory (RAM + VRAM) for the session — don't warm a
+  library you won't spawn.
+- Needs a natural loading point to gate on. Seamless/open-world games fit the
+  native background approach better.
 - The warmup light has shadows off, so **shadow-pass pipeline variants are not warmed**.
   If your world uses shadow-casting lights on VFX, first shadowed draw can still hitch.
 - Pipelines are compiled per shader variant. A variant only produced by settings the
