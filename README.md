@@ -121,7 +121,9 @@ Reliability details:
 
 ## vs Godot's built-in shader mechanisms
 
-The Godot docs page this technique is based on describes three mechanisms that all get called "built-in precompilation". None replaces this preloader; each covers a different slice:
+The Godot docs page this technique is based on —
+[pipeline compilations](https://docs.godotengine.org/en/stable/tutorials/performance/pipeline_compilations.html)
+— describes three mechanisms that all get called "built-in precompilation". None replaces this preloader; each covers a different slice:
 
 | Mechanism | What it covers | What it misses |
 |---|---|---|
