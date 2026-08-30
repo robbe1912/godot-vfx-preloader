@@ -63,9 +63,8 @@ shader pipeline cache (`user://shader_cache`) before every run**, so each run st
 from cold and the test is repeatable.
 
 > **This test measures real GPU pipeline compilation — run it windowed on real
-> hardware.** The CI workflow runs the same script headless purely as a logic
-> smoke test (dummy renderer, no GPU): a green CI check verifies the code paths
-> work, not the hitch numbers.
+> hardware.** A headless run uses Godot's dummy renderer (no GPU): it exercises
+> the code paths only, and its numbers are not meaningful.
 
 ```bash
 godot --headless --path . --script res://tests/run_ab_test.gd -- --mode=both
@@ -172,11 +171,3 @@ tests/run_ab_test.gd                    # repeatable A/B test, wipes shader cach
 ```
 
 License: MIT — see [LICENSE](LICENSE).
-
-## CI
-
-`.github/workflows/ci.yml` runs the import + a preloaded A/B run on every push/PR.
-The orchestrator auto-detects headless and passes `--headless` to the child run, so
-it works on display-less CI runners. Note: headless uses Godot's dummy renderer, so
-CI verifies the logic (imports parse, preload phases run, result file written) —
-the real GPU pipeline numbers only mean something on desktop hardware.
