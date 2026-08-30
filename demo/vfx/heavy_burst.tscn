@@ -5,17 +5,17 @@
 
 [sub_resource type="ShaderMaterial" id="smat"]
 shader = ExtResource("2_shader")
-shader_parameter/strength = 1.0
+shader_parameter/strength = 0.45
 
 [sub_resource type="ParticleProcessMaterial" id="ppm"]
 emission_shape = 1
 emission_sphere_radius = 0.5
 spread = 180.0
-initial_velocity_min = 4.0
-initial_velocity_max = 9.0
+initial_velocity_min = 5.0
+initial_velocity_max = 11.0
 gravity = Vector3(0, -6, 0)
-scale_min = 0.8
-scale_max = 1.6
+scale_min = 0.6
+scale_max = 1.1
 
 [sub_resource type="SphereMesh" id="mesh"]
 material = SubResource("smat")

@@ -11,6 +11,8 @@ on the first explosion.
 instantiates every scene inside a hidden 64x64 SubViewport and renders it for exactly
 one frame — that single render is what triggers real GPU pipeline compilation.
 
+![Demo: preload progress bar, then hitch-free VFX bursts](docs/demo.gif)
+
 ## Quick start — standalone demo
 
 1. Open this folder in Godot 4.7+ (it is a complete project).
@@ -132,7 +134,7 @@ What this preloader adds over using built-ins alone:
 - Deterministic gating: `preloading_completed` signal + progress — you control when gameplay starts
 - Runs your effect scripts early (`_ready()` runs during warmup), so CPU-side first-use costs (procedural texture generation, material setup) land on the loading screen too
 - Works on the Compatibility renderer (where 4.4+ ubershader machinery doesn't exist) and pre-4.4 engines
-- Verifiable: pair with `run_ab_test.ps1` for a measured before/after
+- Verifiable: pair with `tests/run_ab_test.gd` for a measured before/after
 
 **When built-in alone is enough**: Godot 4.4+, Forward+/Mobile, and every VFX lives in a scene visible at load time. Watch the debugger's pipeline compilation monitors — if you see no **Surface**/**Draw** step spikes during gameplay, you don't need this. If effects spawn dynamically and you see spikes when they first appear, you do.
 

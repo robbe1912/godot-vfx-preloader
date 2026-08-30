@@ -5,7 +5,11 @@
 #   --no-preload   skip the preloader; the FIRST click pays the full cost
 #                  (texture generation, GPU upload, pipeline compilation)
 #   --auto-test    spawn the heavy effect automatically, print a HITCHTEST
-#                  measurement line, then quit (used by run_ab_test.ps1)
+#                  measurement line, then quit (used by tests/run_ab_test.gd)
+#   --autoplay     spawn effects automatically, no input needed
+#   --screenshot-dir=<path>  save a numbered PNG of every Nth frame and quit
+#                  after CAPTURE_SECONDS (combine with --autoplay to record
+#                  the demo for a GIF)
 extends Node3D
 
 const VFX_FOLDER: String = "res://demo/vfx"
@@ -15,6 +19,10 @@ const TIMEOUT_SEC: float = 30.0
 const AUTO_SKIP_FRAMES: int = 10
 const AUTO_BASELINE_FRAMES: int = 45
 const AUTO_MEASURE_FRAMES: int = 6
+
+const AUTOPLAY_INTERVAL_SEC: float = 0.8
+const CAPTURE_SECONDS: float = 9.0
+const CAPTURE_FRAME_INTERVAL: int = 4
 
 const BAR_WIDTH: int = 400
 const BAR_HEIGHT: int = 12
@@ -40,14 +48,24 @@ var _baseline_ms: float = 0.0
 var _peak_ms: float = 0.0
 var _result_file: String = ""
 
+var _autoplay: bool = false
+var _autoplay_next: float = AUTOPLAY_INTERVAL_SEC
+var _screenshot_dir: String = ""
+var _capture_frame_count: int = 0
+var _capture_elapsed: float = 0.0
+var _captured_count: int = 0
+
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	_preload_enabled = not args.has("--no-preload")
 	_auto_test = args.has("--auto-test")
+	_autoplay = args.has("--autoplay")
 	for arg in args:
 		if arg.begins_with("--result-file="):
 			_result_file = arg.get_slice("=", 1)
+		elif arg.begins_with("--screenshot-dir="):
+			_screenshot_dir = arg.get_slice("=", 1)
 
 	_build_stage()
 	_build_ui()
@@ -68,21 +86,46 @@ func _start_preload() -> void:
 
 
 func _process(delta: float) -> void:
+	if not _screenshot_dir.is_empty():
+		_capture_tick(delta)
+
 	if _auto_test:
 		_auto_tick(delta * 1000.0)
 		return
 
-	if _ready_to_spawn:
+	if not _ready_to_spawn:
+		_elapsed += delta
+		if _elapsed >= TIMEOUT_SEC:
+			push_warning("Demo: VFX preload timed out after %.1fs" % TIMEOUT_SEC)
+			_on_preload_completed()
+			return
+
+		_progress_bar.value = _preloader.get_progress() * 100.0
+		_label.text = _preloader.get_phase_label()
 		return
 
-	_elapsed += delta
-	if _elapsed >= TIMEOUT_SEC:
-		push_warning("Demo: VFX preload timed out after %.1fs" % TIMEOUT_SEC)
-		_on_preload_completed()
-		return
+	if _autoplay:
+		_autoplay_tick(delta)
 
-	_progress_bar.value = _preloader.get_progress() * 100.0
-	_label.text = _preloader.get_phase_label()
+
+func _autoplay_tick(delta: float) -> void:
+	_autoplay_next -= delta
+	if _autoplay_next <= 0.0:
+		_spawn_vfx()
+		_autoplay_next = AUTOPLAY_INTERVAL_SEC
+
+
+func _capture_tick(delta: float) -> void:
+	_capture_elapsed += delta
+	if _capture_elapsed >= CAPTURE_SECONDS:
+		print("Capture complete: %d frames -> %s" % [_captured_count, _screenshot_dir])
+		get_tree().quit()
+		return
+	_capture_frame_count += 1
+	if _capture_frame_count % CAPTURE_FRAME_INTERVAL == 0:
+		var img := get_viewport().get_texture().get_image()
+		img.save_png("%s/capture_%04d.png" % [_screenshot_dir, _captured_count])
+		_captured_count += 1
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -170,6 +213,15 @@ func _auto_tick(ms: float) -> void:
 
 
 func _build_stage() -> void:
+	var world_env := WorldEnvironment.new()
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color(0.08, 0.08, 0.1)
+	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.tonemap_exposure = 0.9
+	world_env.environment = env
+	add_child(world_env)
+
 	var camera := Camera3D.new()
 	camera.position = Vector3(0.0, 1.5, 5.0)
 	add_child(camera)
